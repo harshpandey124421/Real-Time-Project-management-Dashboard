@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PM Dashboard</title>
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+
+<nav class="topbar">
+  <a href="/" class="topbar-logo">📋 PM Dashboard</a>
+  <div class="topbar-links">
+    <% if (loggedUser) { %>
+      <a href="/dashboard">Home</a>
+      <span class="username-pill">👤 <%= loggedUser.myname %></span>
+      <form action="/logout" method="POST" style="display:inline">
+        <button type="submit" class="logout-btn">Logout</button>
+      </form>
+    <% } %>
+  </div>
+</nav>
+
+<div class="mainbox">
+  <% if (successMsg && successMsg.length) { %>
+    <div class="msg-success" id="successmsg"><%= successMsg %></div>
+  <% } %>
+  <% if (errorMsg && errorMsg.length) { %>
+    <div class="msg-error" id="errormsg"><%= errorMsg %></div>
+  <% } %>
