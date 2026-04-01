@@ -1,0 +1,33 @@
+<%- include('headerpart') %>
+
+<div class="authwrapper">
+  <div class="authcard">
+    <div class="authcard-title">📋 PM Dashboard</div>
+    <div class="authcard-sub">Login to your account</div>
+
+    <% if (formErr) { %>
+      <div class="msg-error"><%= formErr %></div>
+    <% } %>
+
+    <form action="/login" method="POST">
+      <div class="formgroup">
+        <label class="formlabel">Email</label>
+        <input class="forminput" type="email" name="myemail" required
+          placeholder="yourname@email.com"
+          value="<%= oldData.myemail || '' %>"/>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Password</label>
+        <input class="forminput" type="password" name="mypassword" required
+          placeholder="Enter your password"/>
+      </div>
+      <button type="submit" class="mybtn btn-blue btn-fullwidth">Login</button>
+    </form>
+
+    <div class="authcard-switch">
+      No account? <a href="/register">Register here</a>
+    </div>
+  </div>
+</div>
+
+<%- include('footerpart') %>
