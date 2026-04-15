@@ -1,0 +1,105 @@
+<%- include('partials/header') %>
+
+<div class="pagetop">
+  <div>
+    <div class="pagetop-title">Dashboard</div>
+    <div class="pagetop-sub">Welcome back, <strong><%= loggedUser.myname %></strong> (@<%= loggedUser.username %>)</div>
+  </div>
+  <a href="/projects/new" class="mybtn btn-blue">+ New Project</a>
+</div>
+
+<!-- stat boxes -->
+<div class="statrow">
+  <div class="statbox"><div class="statbox-icon">📁</div><div><div class="statbox-number"><%= totalprojects %></div><div class="statbox-label">My Projects</div></div></div>
+  <div class="statbox"><div class="statbox-icon">🟢</div><div><div class="statbox-number"><%= activeprojects %></div><div class="statbox-label">Active</div></div></div>
+  <div class="statbox"><div class="statbox-icon">📝</div><div><div class="statbox-number"><%= totaltasks %></div><div class="statbox-label">My Tasks</div></div></div>
+  <div class="statbox"><div class="statbox-icon">✅</div><div><div class="statbox-number"><%= donecount %></div><div class="statbox-label">Tasks Done</div></div></div>
+</div>
+
+<!-- overdue warning -->
+<% if (overduetasks.length > 0) { %>
+<div class="warningbox">
+  <div class="warningbox-title">⚠️ Overdue Tasks (<%= overduetasks.length %>)</div>
+  <% overduetasks.forEach(function(t) { %>
+    <div class="warningbox-item">
+      <span class="overdue-dot"></span>
+      <%= t.taskname %> — <span style="color:#999;font-size:12px"><%= t.belongsTo ? t.belongsTo.projectname : '' %></span>
+      <span class="overdue-date">due <%= new Date(t.taskdeadline).toDateString() %></span>
+    </div>
+  <% }) %>
+</div>
+<% } %>
+
+<!-- due soon warning -->
+<% if (duesoontasks.length > 0) { %>
+<div class="warningbox warning-yellow">
+  <div class="warningbox-title">⏰ Due in 3 Days (<%= duesoontasks.length %>)</div>
+  <% duesoontasks.forEach(function(t) { %>
+    <div class="warningbox-item">
+      <span class="duesoon-dot"></span>
+      <%= t.taskname %> — <span style="color:#999;font-size:12px"><%= t.belongsTo ? t.belongsTo.projectname : '' %></span>
+      <span class="duesoon-date">due <%= new Date(t.taskdeadline).toDateString() %></span>
+    </div>
+  <% }) %>
+</div>
+<% } %>
+
+<!-- progress bar -->
+<% if (totaltasks > 0) { %>
+<div class="progressbox">
+  <div class="progressbox-title">My Task Progress</div>
+  <div class="badgerow">
+    <span class="mybadge badge-todo">To Do: <%= todocount %></span>
+    <span class="mybadge badge-inprogress">In Progress: <%= inprogresscount %></span>
+    <span class="mybadge badge-done">Done: <%= donecount %></span>
+  </div>
+  <% var donepct = Math.round((donecount/totaltasks)*100); var inpct = Math.round((inprogresscount/totaltasks)*100) %>
+  <div class="bigprogbar">
+    <div class="seg-done" style="width:<%= donepct %>%"></div>
+    <div class="seg-inprogress" style="width:<%= inpct %>%"></div>
+    <div class="seg-todo" style="width:<%= 100-donepct-inpct %>%"></div>
+  </div>
+  <div class="progpct"><%= donepct %>% of my tasks done</div>
+</div>
+<% } %>
+
+<!-- projects -->
+<div class="section-title" style="margin-bottom:12px">All Projects</div>
+<% if (allprojects.length === 0) { %>
+  <div class="emptybox"><div class="emptybox-icon">📂</div><p>No projects yet.</p><a href="/projects/new" class="mybtn btn-blue" style="margin-top:12px">Create Project</a></div>
+<% } else { %>
+  <div class="projectsgrid">
+    <% allprojects.forEach(function(p) { %>
+      <div class="projectcard projectcard-<%= p.projectstatus %>">
+        <div class="projectcard-top">
+          <div>
+            <span class="projectcard-name"><%= p.projectname %></span>
+            <% if (p.iamadmin) { %><span class="admin-tag">Admin</span><% } else { %><span class="collab-tag">Member</span><% } %>
+          </div>
+          <span class="statusbadge statusbadge-<%= p.projectstatus %>"><%= p.projectstatus %></span>
+        </div>
+        <div class="projectcard-desc"><%= p.projectdesc || 'No description' %></div>
+        <div class="projectcard-meta">👥 <%= p.membercount %> member<%= p.membercount !== 1 ? 's' : '' %>
+          <% if (p.githubrepo) { %> &nbsp; <a href="<%= p.githubrepo %>" target="_blank" class="github-link-small">⑂ GitHub</a><% } %>
+        </div>
+        <% if (p.totaltasks > 0) { %>
+          <div class="miniprog-track"><div class="miniprog-fill" style="width:<%= Math.round((p.donetasks/p.totaltasks)*100) %>%"></div></div>
+          <div class="miniprog-label"><%= p.donetasks %> / <%= p.totaltasks %> tasks done</div>
+        <% } else { %><div class="miniprog-label">No tasks yet</div><% } %>
+        <% if (p.projectdeadline) { %><div class="projectcard-meta">📅 <%= new Date(p.projectdeadline).toDateString() %></div><% } %>
+        <div class="projectcard-btns">
+          <a href="/projects/<%= p._id %>" class="mybtn btn-blue btn-small">Open</a>
+          <a href="/chat/<%= p._id %>" class="mybtn btn-white btn-small">💬 Chat</a>
+          <% if (p.iamadmin) { %>
+            <a href="/projects/<%= p._id %>/edit" class="mybtn btn-white btn-small">Edit</a>
+            <form action="/projects/<%= p._id %>/delete?_method=DELETE" method="POST" style="display:inline" onsubmit="return confirm('Delete this project?')">
+              <button type="submit" class="mybtn btn-red btn-small">Delete</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

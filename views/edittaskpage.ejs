@@ -1,0 +1,56 @@
+<%- include('partials/header') %>
+<div class="pagetop">
+  <div><div class="pagetop-title">Edit Task</div><div class="pagetop-sub"><%= mytask.taskname %></div></div>
+  <a href="/projects/<%= mytask.belongsTo %>" class="mybtn btn-white">← Back</a>
+</div>
+<div class="contentcard">
+  <% if (formErr) { %><div class="msg-error"><%= formErr %></div><% } %>
+  <form action="/tasks/<%= mytask._id %>/edit?_method=PUT" method="POST">
+    <div class="formgroup">
+      <label class="formlabel">Task Name *</label>
+      <input class="forminput" type="text" name="taskname" required value="<%= mytask.taskname %>"/>
+    </div>
+    <div class="formgroup">
+      <label class="formlabel">Description</label>
+      <textarea class="formtextarea" name="taskdesc" rows="3"><%= mytask.taskdesc %></textarea>
+    </div>
+    <div class="formrow3">
+      <div class="formgroup">
+        <label class="formlabel">Status</label>
+        <select class="formselect" name="taskstatus">
+          <option value="todo"       <%= mytask.taskstatus==='todo'       ?'selected':'' %>>To Do</option>
+          <option value="inprogress" <%= mytask.taskstatus==='inprogress' ?'selected':'' %>>In Progress</option>
+          <option value="done"       <%= mytask.taskstatus==='done'       ?'selected':'' %>>Done</option>
+        </select>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Priority</label>
+        <select class="formselect" name="taskpriority">
+          <option value="low"    <%= mytask.taskpriority==='low'    ?'selected':'' %>>Low</option>
+          <option value="medium" <%= mytask.taskpriority==='medium' ?'selected':'' %>>Medium</option>
+          <option value="high"   <%= mytask.taskpriority==='high'   ?'selected':'' %>>High</option>
+        </select>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Deadline</label>
+        <input class="forminput" type="date" name="taskdeadline" value="<%= mytask.taskdeadline ? mytask.taskdeadline.toISOString().split('T')[0] : '' %>"/>
+      </div>
+    </div>
+    <% if (amiadmin) { %>
+    <div class="formgroup">
+      <label class="formlabel">Assign To</label>
+      <select class="formselect" name="assignedTo">
+        <option value="">-- Unassigned --</option>
+        <% allmembers.forEach(function(m) { %>
+          <option value="<%= m._id %>" <%= mytask.assignedTo && mytask.assignedTo.toString() === m._id.toString() ? 'selected' : '' %>><%= m.myname %> (@<%= m.username %>)</option>
+        <% }) %>
+      </select>
+    </div>
+    <% } %>
+    <div class="form-bottomrow">
+      <a href="/projects/<%= mytask.belongsTo %>" class="mybtn btn-white">Cancel</a>
+      <button type="submit" class="mybtn btn-blue">Save Changes</button>
+    </div>
+  </form>
+</div>
+<%- include('partials/footer') %>

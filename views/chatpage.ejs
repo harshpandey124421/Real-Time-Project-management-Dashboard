@@ -1,0 +1,28 @@
+<%- include('partials/header') %>
+<div class="pagetop">
+  <div><div class="pagetop-title">💬 Team Chat</div><div class="pagetop-sub"><%= myproject.projectname %></div></div>
+  <a href="/projects/<%= myproject._id %>" class="mybtn btn-white">← Back to Project</a>
+</div>
+
+<div class="chat-wrapper">
+  <div class="chat-messages" id="chatbox">
+    <% if (messages.length === 0) { %>
+      <div style="text-align:center;color:#aaa;padding:32px">No messages yet. Say hello! 👋</div>
+    <% } %>
+    <% messages.forEach(function(m) { %>
+      <% var ismine = m.madeBy && m.madeBy._id.toString() === myid %>
+      <div class="chat-msg <%= ismine ? 'chat-msg-mine' : 'chat-msg-theirs' %>">
+        <% if (!ismine) { %><div class="chat-sender"><%= m.madeBy ? m.madeBy.myname : 'User' %></div><% } %>
+        <div class="chat-bubble <%= ismine ? 'bubble-mine' : 'bubble-theirs' %>"><%= m.messagetext %></div>
+        <div class="chat-time"><%= new Date(m.createdAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) %> · <%= new Date(m.createdAt).toDateString() %></div>
+      </div>
+    <% }) %>
+  </div>
+
+  <form action="/chat/<%= myproject._id %>/send" method="POST" class="chat-form">
+    <input class="forminput" type="text" name="messagetext" placeholder="Type your message..." required autocomplete="off"/>
+    <button type="submit" class="mybtn btn-blue">Send</button>
+  </form>
+</div>
+
+<%- include('partials/footer') %>
