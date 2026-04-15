@@ -1,0 +1,47 @@
+<%- include('partials/header') %>
+<div class="pagetop">
+  <div><div class="pagetop-title">Edit Project</div><div class="pagetop-sub"><%= myproject.projectname %></div></div>
+  <a href="/projects/<%= myproject._id %>" class="mybtn btn-white">← Back</a>
+</div>
+<div class="contentcard">
+  <% if (formErr) { %><div class="msg-error"><%= formErr %></div><% } %>
+  <form action="/projects/<%= myproject._id %>/edit?_method=PUT" method="POST">
+    <div class="formgroup">
+      <label class="formlabel">Project Name <span class="required-star">*</span></label>
+      <input class="forminput" type="text" name="projectname" required value="<%= myproject.projectname %>"/>
+    </div>
+    <div class="formgroup">
+      <label class="formlabel">Description</label>
+      <textarea class="formtextarea" name="projectdesc" rows="3"><%= myproject.projectdesc %></textarea>
+    </div>
+    <div class="formgroup">
+      <label class="formlabel">GitHub Repo URL</label>
+      <input class="forminput" type="text" name="githubrepo" placeholder="https://github.com/yourname/yourrepo" value="<%= myproject.githubrepo || '' %>"/>
+    </div>
+    <div class="formrow">
+      <div class="formgroup">
+        <label class="formlabel">Status</label>
+        <select class="formselect" name="projectstatus">
+          <option value="active"    <%= myproject.projectstatus==='active'    ?'selected':'' %>>Active</option>
+          <option value="on-hold"   <%= myproject.projectstatus==='on-hold'   ?'selected':'' %>>On Hold</option>
+          <option value="completed" <%= myproject.projectstatus==='completed' ?'selected':'' %>>Completed</option>
+        </select>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Deadline</label>
+        <input class="forminput" type="date" name="projectdeadline" value="<%= myproject.projectdeadline ? myproject.projectdeadline.toISOString().split('T')[0] : '' %>"/>
+      </div>
+    </div>
+    <div class="formgroup">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;font-size:14px">
+        <input type="checkbox" name="ispublic" <%= myproject.ispublic ? 'checked' : '' %> style="width:16px;height:16px;accent-color:#4a6cf7"/>
+        Make this project public
+      </label>
+    </div>
+    <div class="form-bottomrow">
+      <a href="/projects/<%= myproject._id %>" class="mybtn btn-white">Cancel</a>
+      <button type="submit" class="mybtn btn-blue">Save Changes</button>
+    </div>
+  </form>
+</div>
+<%- include('partials/footer') %>

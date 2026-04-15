@@ -1,0 +1,48 @@
+<%- include('partials/header') %>
+<div class="pagetop">
+  <div><div class="pagetop-title">New Project</div><div class="pagetop-sub">Fill in the details below</div></div>
+  <a href="/dashboard" class="mybtn btn-white">← Back</a>
+</div>
+<div class="contentcard">
+  <% if (formErr) { %><div class="msg-error"><%= formErr %></div><% } %>
+  <form action="/projects/new" method="POST">
+    <div class="formgroup">
+      <label class="formlabel">Project Name <span class="required-star">*</span></label>
+      <input class="forminput" type="text" name="projectname" required placeholder="e.g. College Website" value="<%= oldData.projectname || '' %>"/>
+    </div>
+    <div class="formgroup">
+      <label class="formlabel">Description</label>
+      <textarea class="formtextarea" name="projectdesc" rows="3" placeholder="What is this project about?"><%= oldData.projectdesc || '' %></textarea>
+    </div>
+    <div class="formgroup">
+      <label class="formlabel">GitHub Repo URL <span style="color:#888;font-weight:400">(optional)</span></label>
+      <input class="forminput" type="text" name="githubrepo" placeholder="https://github.com/yourname/yourrepo" value="<%= oldData.githubrepo || '' %>"/>
+      <span style="font-size:12px;color:#888;margin-top:4px">Collaborators will see clone commands here</span>
+    </div>
+    <div class="formrow">
+      <div class="formgroup">
+        <label class="formlabel">Status</label>
+        <select class="formselect" name="projectstatus">
+          <option value="active">Active</option>
+          <option value="on-hold">On Hold</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Deadline</label>
+        <input class="forminput" type="date" name="projectdeadline" value="<%= oldData.projectdeadline || '' %>"/>
+      </div>
+    </div>
+    <div class="formgroup">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;font-size:14px">
+        <input type="checkbox" name="ispublic" checked style="width:16px;height:16px;accent-color:#4a6cf7"/>
+        Make this project public (visible in Browse Projects)
+      </label>
+    </div>
+    <div class="form-bottomrow">
+      <a href="/dashboard" class="mybtn btn-white">Cancel</a>
+      <button type="submit" class="mybtn btn-blue">Create Project</button>
+    </div>
+  </form>
+</div>
+<%- include('partials/footer') %>

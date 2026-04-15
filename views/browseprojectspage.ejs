@@ -1,0 +1,40 @@
+<%- include('partials/header') %>
+
+<div class="pagetop">
+  <div><div class="pagetop-title">Browse Projects</div><div class="pagetop-sub">Send a join request to become a collaborator</div></div>
+  <a href="/dashboard" class="mybtn btn-white">← Dashboard</a>
+</div>
+
+<% if (browseable.length === 0) { %>
+  <div class="emptybox"><div class="emptybox-icon">🔍</div><p>No public projects available to join right now.</p></div>
+<% } else { %>
+  <div class="projectsgrid">
+    <% browseable.forEach(function(p) { %>
+      <div class="projectcard projectcard-<%= p.projectstatus %>">
+        <div class="projectcard-top">
+          <div class="projectcard-name"><%= p.projectname %></div>
+          <span class="statusbadge statusbadge-<%= p.projectstatus %>"><%= p.projectstatus %></span>
+        </div>
+        <div class="projectcard-desc"><%= p.projectdesc || 'No description' %></div>
+        <div class="projectcard-meta">👤 Admin: <%= p.madeBy.myname %> (@<%= p.madeBy.username %>)</div>
+        <% if (p.projectdeadline) { %><div class="projectcard-meta">📅 <%= new Date(p.projectdeadline).toDateString() %></div><% } %>
+        <div style="margin-top:12px">
+          <% if (myrequestids.includes(p._id.toString())) { %>
+            <span class="mybadge badge-inprogress" style="padding:6px 14px">Request Pending...</span>
+          <% } else { %>
+            <button class="mybtn btn-blue btn-small" onclick="showrequestform('<%= p._id %>')">Request to Join</button>
+            <form id="reqform-<%= p._id %>" action="/projects/<%= p._id %>/joinrequest" method="POST" style="display:none;margin-top:10px">
+              <input class="forminput" type="text" name="message" placeholder="Optional message to admin..." style="margin-bottom:8px"/>
+              <div style="display:flex;gap:8px">
+                <button type="submit" class="mybtn btn-blue btn-small">Send Request</button>
+                <button type="button" class="mybtn btn-white btn-small" onclick="showrequestform('<%= p._id %>')">Cancel</button>
+              </div>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>
