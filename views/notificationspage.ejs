@@ -1,0 +1,24 @@
+<%- include('partials/header') %>
+<div class="pagetop">
+  <div><div class="pagetop-title">🔔 Notifications</div><div class="pagetop-sub">All your recent notifications</div></div>
+  <a href="/dashboard" class="mybtn btn-white">← Dashboard</a>
+</div>
+
+<% if (allnotifications.length === 0) { %>
+  <div class="emptybox"><div class="emptybox-icon">🔔</div><p>No notifications yet.</p></div>
+<% } else { %>
+  <div class="notif-list">
+    <% allnotifications.forEach(function(n) { %>
+      <div class="notif-item <%= n.isread ? 'notif-read' : 'notif-unread' %>">
+        <div class="notif-dot <%= n.isread ? '' : 'notif-dot-active' %>"></div>
+        <div class="notif-body">
+          <div class="notif-msg"><%= n.message %></div>
+          <div class="notif-time"><%= new Date(n.createdAt).toDateString() %> at <%= new Date(n.createdAt).toLocaleTimeString() %></div>
+          <% if (n.link) { %><a href="<%= n.link %>" class="notif-link-btn">View →</a><% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>
