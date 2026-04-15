@@ -1,0 +1,415 @@
+<%- include('partials/header') %>
+
+<!-- header -->
+<div class="pagetop">
+  <div>
+    <div class="pagetop-title">
+      <%= myproject.projectname %>
+      <% if (amiadmin) { %><span class="admin-tag">Admin</span><% } else { %><span class="collab-tag">Member</span><% } %>
+    </div>
+    <div class="pagetop-sub">
+      <span class="statusbadge statusbadge-<%= myproject.projectstatus %>"><%= myproject.projectstatus %></span>
+      <% if (myproject.projectdeadline) { %>&nbsp; 📅 <%= new Date(myproject.projectdeadline).toDateString() %><% } %>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="/chat/<%= myproject._id %>" class="mybtn btn-white">💬 Team Chat</a>
+    <% if (amiadmin) { %><a href="/projects/<%= myproject._id %>/edit" class="mybtn btn-white">Edit</a><% } %>
+    <a href="/dashboard" class="mybtn btn-white">← Dashboard</a>
+  </div>
+</div>
+
+<% if (myproject.projectdesc) { %><p style="font-size:14px;color:#666;margin-bottom:16px"><%= myproject.projectdesc %></p><% } %>
+
+<!-- tabs -->
+<div class="tab-row">
+  <button class="tablink active" onclick="showtab('tasks')">📋 Tasks</button>
+  <button class="tablink" onclick="showtab('github')">⑂ GitHub</button>
+  <button class="tablink" onclick="showtab('members')">👥 Members</button>
+  <button class="tablink" onclick="showtab('progress')">📊 Progress</button>
+  <button class="tablink" onclick="showtab('activity')">📜 Activity</button>
+  <% if (amiadmin && pendingrequests.length > 0) { %>
+    <button class="tablink" onclick="showtab('requests')">🔔 Requests (<%= pendingrequests.length %>)</button>
+  <% } %>
+</div>
+
+<!-- ============ TASKS TAB ============ -->
+<div id="tab-tasks" class="tabcontent">
+  <div class="taskstatsrow">
+    <span class="taskstatpill pill-all">All: <%= taskcount.total %></span>
+    <span class="taskstatpill pill-todo">To Do: <%= taskcount.todo %></span>
+    <span class="taskstatpill pill-inprogress">In Progress: <%= taskcount.inprogress %></span>
+    <span class="taskstatpill pill-done">Done: <%= taskcount.done %></span>
+    <% if (taskcount.total > 0) { %>
+      <span class="taskstatpill" style="background:#e0e7ff;color:#4338ca;border:1px solid #c7d2fe"><%= progresspct %>% complete</span>
+    <% } %>
+  </div>
+
+  <% if (amiadmin) { %>
+  <div class="addtaskbox">
+    <button class="addtask-toggle" onclick="showhideTaskForm()"><span id="togglebtntext">+ Add New Task</span></button>
+    <div class="addtask-formarea" id="taskformarea" style="display:none">
+      <form action="/tasks/add" method="POST">
+        <input type="hidden" name="projectid" value="<%= myproject._id %>"/>
+        <div class="formgroup">
+          <label class="formlabel">Task Name *</label>
+          <input class="forminput" type="text" name="taskname" required placeholder="What needs to be done?"/>
+        </div>
+        <div class="formgroup">
+          <label class="formlabel">Description</label>
+          <textarea class="formtextarea" name="taskdesc" rows="2" placeholder="Optional details..."></textarea>
+        </div>
+        <div class="formrow3">
+          <div class="formgroup">
+            <label class="formlabel">Status</label>
+            <select class="formselect" name="taskstatus">
+              <option value="todo">To Do</option>
+              <option value="inprogress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+          <div class="formgroup">
+            <label class="formlabel">Priority</label>
+            <select class="formselect" name="taskpriority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="formgroup">
+            <label class="formlabel">Deadline</label>
+            <input class="forminput" type="date" name="taskdeadline"/>
+          </div>
+        </div>
+        <div class="formgroup">
+          <label class="formlabel">Assign To</label>
+          <select class="formselect" name="assignedTo">
+            <option value="">-- Unassigned --</option>
+            <% allmembers.forEach(function(m) { %>
+              <option value="<%= m._id %>"><%= m.myname %> (@<%= m.username %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-bottomrow">
+          <button type="button" class="mybtn btn-white" onclick="showhideTaskForm()">Cancel</button>
+          <button type="submit" class="mybtn btn-blue">Add Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <% } %>
+
+  <% if (mytasks.length === 0) { %>
+    <div class="emptybox"><div class="emptybox-icon">📋</div><p>No tasks yet.<% if (amiadmin) { %> Add one above.<% } %></p></div>
+  <% } else { %>
+  <div class="columnsrow">
+    <% ['todo','inprogress','done'].forEach(function(colstatus) { %>
+      <% var colLabels = {todo:'To Do',inprogress:'In Progress',done:'Done'} %>
+      <% var coltasks  = mytasks.filter(function(t){ return t.taskstatus === colstatus }) %>
+      <div class="column">
+        <div class="column-top col-<%= colstatus %>">
+          <span class="col-dot dot-<%= colstatus %>"></span>
+          <%= colLabels[colstatus] %>
+          <span class="col-taskcount"><%= coltasks.length %></span>
+        </div>
+        <div class="column-body">
+          <% if (coltasks.length === 0) { %><div class="col-empty-msg">Nothing here</div><% } %>
+          <% coltasks.forEach(function(t) { %>
+            <% var canchange = amiadmin || (t.assignedTo && t.assignedTo._id.toString() === myid) %>
+            <div class="taskcard taskcard-<%= t.taskpriority %><%= colstatus === 'done' ? ' taskcard-done' : '' %>">
+              <div class="taskcard-name <%= colstatus === 'done' ? 'strikethrough' : '' %>"><%= t.taskname %></div>
+              <% if (t.taskdesc && colstatus !== 'done') { %><div class="taskcard-desc"><%= t.taskdesc %></div><% } %>
+              <% if (t.assignedTo) { %><div class="taskcard-assignedto">👤 <%= t.assignedTo.myname %> (@<%= t.assignedTo.username %>)</div><% } else { %><div class="taskcard-assignedto" style="color:#bbb">Unassigned</div><% } %>
+              <div class="taskcard-meta">
+                <span class="mybadge badge-<%= t.taskpriority %>"><%= t.taskpriority %></span>
+                <% if (t.taskdeadline) { %>
+                  <% var isoverdue = t.taskstatus !== 'done' && new Date(t.taskdeadline) < new Date() %>
+                  <span class="taskcard-deadline <%= isoverdue ? 'overdue-text' : '' %>">📅 <%= new Date(t.taskdeadline).toDateString() %><%= isoverdue ? ' ⚠️' : '' %></span>
+                <% } %>
+              </div>
+              <% if (canchange) { %>
+              <div class="taskcard-statusbtns">
+                <% if (colstatus !== 'todo') { %>
+                  <form action="/tasks/<%= t._id %>/changestatus" method="POST" style="display:inline">
+                    <input type="hidden" name="newstatus" value="todo"/>
+                    <input type="hidden" name="projectid" value="<%= myproject._id %>"/>
+                    <button type="submit" class="statuschangebtn">To Do</button>
+                  </form>
+                <% } %>
+                <% if (colstatus !== 'inprogress') { %>
+                  <form action="/tasks/<%= t._id %>/changestatus" method="POST" style="display:inline">
+                    <input type="hidden" name="newstatus" value="inprogress"/>
+                    <input type="hidden" name="projectid" value="<%= myproject._id %>"/>
+                    <button type="submit" class="statuschangebtn">In Progress</button>
+                  </form>
+                <% } %>
+                <% if (colstatus !== 'done') { %>
+                  <form action="/tasks/<%= t._id %>/changestatus" method="POST" style="display:inline">
+                    <input type="hidden" name="newstatus" value="done"/>
+                    <input type="hidden" name="projectid" value="<%= myproject._id %>"/>
+                    <button type="submit" class="statuschangebtn donebtn">✓ Done</button>
+                  </form>
+                <% } %>
+              </div>
+              <% } %>
+
+              <!-- task comments toggle -->
+              <div style="margin-top:6px">
+                <button class="mybtn btn-white btn-small" onclick="togglecomments('<%= t._id %>')">
+                  💬 Comments (<%= t.comments ? t.comments.length : 0 %>)
+                </button>
+                <div id="comments-<%= t._id %>" style="display:none;margin-top:8px">
+                  <% if (t.comments && t.comments.length > 0) { %>
+                    <% t.comments.forEach(function(c) { %>
+                      <div class="comment-item">
+                        <span class="comment-name"><%= c.madeBy ? c.madeBy.myname : 'User' %>:</span>
+                        <span class="comment-text"><%= c.commenttext %></span>
+                        <span class="comment-time"><%= new Date(c.madeat).toDateString() %></span>
+                      </div>
+                    <% }) %>
+                  <% } else { %><p style="font-size:12px;color:#aaa;margin-bottom:6px">No comments yet</p><% } %>
+                  <form action="/tasks/<%= t._id %>/addcomment" method="POST" style="display:flex;gap:6px;margin-top:6px">
+                    <input type="hidden" name="projectid" value="<%= myproject._id %>"/>
+                    <input class="forminput" type="text" name="commenttext" placeholder="Add a comment..." style="font-size:12px;padding:5px 8px"/>
+                    <button type="submit" class="mybtn btn-blue btn-small">Post</button>
+                  </form>
+                </div>
+              </div>
+
+              <div class="taskcard-actionbtns">
+                <% if (canchange) { %><a href="/tasks/<%= t._id %>/edit" class="mybtn btn-white btn-small">Edit</a><% } %>
+                <% if (amiadmin) { %>
+                  <form action="/tasks/<%= t._id %>/delete?_method=DELETE" method="POST" style="display:inline" onsubmit="return confirm('Delete this task?')">
+                    <button type="submit" class="mybtn btn-red btn-small">Delete</button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+  <% } %>
+</div>
+
+<!-- ============ GITHUB TAB ============ -->
+<div id="tab-github" class="tabcontent" style="display:none">
+  <% if (!githubinfo) { %>
+    <div class="emptybox">
+      <div class="emptybox-icon">⑂</div>
+      <p>No GitHub repo linked to this project.</p>
+      <% if (amiadmin) { %><a href="/projects/<%= myproject._id %>/edit" class="mybtn btn-blue" style="margin-top:12px">Add GitHub Repo</a><% } %>
+    </div>
+  <% } else { %>
+    <div class="github-section">
+      <div class="github-header">
+        <div class="github-reponame">⑂ <%= githubinfo.owner %> / <%= githubinfo.repo %></div>
+        <a href="<%= githubinfo.repourl %>" target="_blank" class="mybtn btn-blue">Open on GitHub ↗</a>
+      </div>
+
+      <div class="github-clone-box">
+        <div class="clone-title">Clone this repository</div>
+        <div class="formgroup">
+          <label class="formlabel">HTTPS</label>
+          <div class="copyrow">
+            <input class="forminput" type="text" id="httpsclone" value="<%= githubinfo.httpsclone %>" readonly/>
+            <button class="mybtn btn-white btn-small" onclick="copytext('httpsclone')">Copy</button>
+          </div>
+        </div>
+        <div class="formgroup">
+          <label class="formlabel">SSH</label>
+          <div class="copyrow">
+            <input class="forminput" type="text" id="sshclone" value="<%= githubinfo.sshclone %>" readonly/>
+            <button class="mybtn btn-white btn-small" onclick="copytext('sshclone')">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="github-workflow-box">
+        <div class="clone-title">📖 Git Workflow for Collaborators</div>
+        <div class="workflow-steps">
+          <div class="workflow-step">
+            <span class="step-num">1</span>
+            <div>
+              <div class="step-title">First time — Clone the repo</div>
+              <div class="codebox">git clone <%= githubinfo.httpsclone.replace('git clone ','') %></div>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <span class="step-num">2</span>
+            <div>
+              <div class="step-title">Create your own branch (use your username)</div>
+              <div class="codebox">git checkout -b feature/<%= loggedUser.username %></div>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <span class="step-num">3</span>
+            <div>
+              <div class="step-title">Before starting work — pull latest changes</div>
+              <div class="codebox">git pull origin main</div>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <span class="step-num">4</span>
+            <div>
+              <div class="step-title">After making changes — add, commit, push</div>
+              <div class="codebox">git add .<br>git commit -m "your message here"<br>git push origin feature/<%= loggedUser.username %></div>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <span class="step-num">5</span>
+            <div>
+              <div class="step-title">Create a Pull Request on GitHub</div>
+              <div class="step-desc">Go to the repo on GitHub → click "Compare & pull request" → ask admin to review and merge</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- suggested branches per member -->
+      <div class="github-clone-box">
+        <div class="clone-title">👥 Suggested Branches for Team Members</div>
+        <table class="branch-table">
+          <tr><th>Member</th><th>Username</th><th>Suggested Branch</th></tr>
+          <% allmembers.forEach(function(m) { %>
+            <tr>
+              <td><%= m.myname %></td>
+              <td>@<%= m.username %></td>
+              <td><code>feature/<%= m.username %></code></td>
+            </tr>
+          <% }) %>
+        </table>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- ============ MEMBERS TAB ============ -->
+<div id="tab-members" class="tabcontent" style="display:none">
+  <div class="collab-section">
+    <div class="collab-list">
+      <div class="collab-item">
+        <div class="collab-item-left">
+          <div class="collab-item-name"><%= myproject.madeBy.myname %> <span class="admin-tag">Admin</span> <% if (myproject.madeBy._id.toString() === myid) { %><span style="font-size:11px;color:#aaa">(you)</span><% } %></div>
+          <div class="collab-item-username">@<%= myproject.madeBy.username %></div>
+        </div>
+        <a href="/profile/<%= myproject.madeBy._id %>" class="mybtn btn-white btn-small">View Profile</a>
+      </div>
+      <% myproject.collaborators.forEach(function(c) { %>
+        <div class="collab-item">
+          <div class="collab-item-left">
+            <div class="collab-item-name"><%= c.myname %> <span class="collab-tag">Member</span> <% if (c._id.toString() === myid) { %><span style="font-size:11px;color:#aaa">(you)</span><% } %></div>
+            <div class="collab-item-username">@<%= c.username %></div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <a href="/profile/<%= c._id %>" class="mybtn btn-white btn-small">Profile</a>
+            <% if (amiadmin) { %>
+              <form action="/collaborators/<%= myproject._id %>/remove" method="POST" onsubmit="return confirm('Remove this member?')">
+                <input type="hidden" name="userid" value="<%= c._id %>"/>
+                <button type="submit" class="mybtn btn-red btn-small">Remove</button>
+              </form>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+      <% if (myproject.collaborators.length === 0) { %><div style="font-size:13px;color:#aaa;padding:6px 0">No collaborators yet.</div><% } %>
+    </div>
+
+    <% if (amiadmin) { %>
+      <hr class="collab-divider"/>
+      <button class="mybtn btn-yellow btn-small" onclick="showhideCollabBox()">+ Add Collaborator by Username</button>
+      <div id="addcollabbox" style="display:none;margin-top:12px">
+        <div class="searchuserbox">
+          <div class="searchuserbox-title">Search by username</div>
+          <div class="searchrow">
+            <input class="forminput" type="text" id="usernamesearch" placeholder="e.g. harsh123" oninput="searchUser()"/>
+          </div>
+          <div id="searchresult" class="searchresult"></div>
+          <form action="/collaborators/<%= myproject._id %>/add" method="POST" id="addcollabform" style="display:none;margin-top:10px">
+            <input type="hidden" name="userid" id="collabUserId"/>
+            <button type="submit" class="mybtn btn-blue btn-small">Add to Project</button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- ============ PROGRESS TAB ============ -->
+<div id="tab-progress" class="tabcontent" style="display:none">
+  <div class="progressbox" style="margin-bottom:16px">
+    <div class="progressbox-title">Overall Progress</div>
+    <div class="bigprogbar">
+      <% var donepct = taskcount.total > 0 ? Math.round((taskcount.done/taskcount.total)*100) : 0 %>
+      <% var inpct   = taskcount.total > 0 ? Math.round((taskcount.inprogress/taskcount.total)*100) : 0 %>
+      <div class="seg-done"       style="width:<%= donepct %>%"></div>
+      <div class="seg-inprogress" style="width:<%= inpct %>%"></div>
+      <div class="seg-todo"       style="width:<%= 100-donepct-inpct %>%"></div>
+    </div>
+    <div class="progpct"><%= donepct %>% complete</div>
+  </div>
+  <div class="section-title" style="margin-bottom:12px">Member Workload</div>
+  <% memberstats.forEach(function(m) { %>
+    <div class="memberstat-row">
+      <div class="memberstat-name"><%= m.myname %> <span style="color:#aaa;font-size:12px">@<%= m.username %></span></div>
+      <div class="memberstat-counts">
+        <span class="mybadge badge-todo">Todo: <%= m.total - m.done - m.inprogress %></span>
+        <span class="mybadge badge-inprogress">In Progress: <%= m.inprogress %></span>
+        <span class="mybadge badge-done">Done: <%= m.done %></span>
+        <span style="font-size:12px;color:#888">Total: <%= m.total %></span>
+      </div>
+      <% if (m.total > 0) { %>
+        <div class="miniprog-track" style="margin-top:6px">
+          <div class="miniprog-fill" style="width:<%= Math.round((m.done/m.total)*100) %>%"></div>
+        </div>
+      <% } %>
+    </div>
+  <% }) %>
+</div>
+
+<!-- ============ ACTIVITY TAB ============ -->
+<div id="tab-activity" class="tabcontent" style="display:none">
+  <% if (recentactivity.length === 0) { %>
+    <div class="emptybox"><div class="emptybox-icon">📜</div><p>No activity yet.</p></div>
+  <% } else { %>
+    <div class="activity-list">
+      <% recentactivity.forEach(function(a) { %>
+        <div class="activity-item">
+          <div class="activity-dot"></div>
+          <div>
+            <div class="activity-text"><%= a.activitytext %></div>
+            <div class="activity-time"><%= new Date(a.createdAt).toDateString() %> at <%= new Date(a.createdAt).toLocaleTimeString() %></div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<!-- ============ JOIN REQUESTS TAB ============ -->
+<% if (amiadmin && pendingrequests.length > 0) { %>
+<div id="tab-requests" class="tabcontent" style="display:none">
+  <div class="collab-list">
+    <% pendingrequests.forEach(function(r) { %>
+      <div class="collab-item">
+        <div class="collab-item-left">
+          <div class="collab-item-name"><%= r.requestedBy.myname %></div>
+          <div class="collab-item-username">@<%= r.requestedBy.username %></div>
+          <% if (r.message) { %><div style="font-size:12px;color:#888;margin-top:4px">"<%= r.message %>"</div><% } %>
+        </div>
+        <div style="display:flex;gap:6px">
+          <form action="/projects/requests/<%= r._id %>/accept" method="POST">
+            <button type="submit" class="mybtn btn-green btn-small">✓ Accept</button>
+          </form>
+          <form action="/projects/requests/<%= r._id %>/reject" method="POST">
+            <button type="submit" class="mybtn btn-red btn-small">✗ Reject</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+<% } %>
+
+<%- include('partials/footer') %>

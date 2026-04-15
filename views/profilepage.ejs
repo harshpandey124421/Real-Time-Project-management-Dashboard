@@ -1,0 +1,92 @@
+<%- include('partials/header') %>
+
+<div class="pagetop">
+  <div>
+    <div class="pagetop-title">👤 Profile</div>
+    <div class="pagetop-sub"><% if (isownprofile) { %>Your profile<% } else { %><%= myuser.myname %>'s profile<% } %></div>
+  </div>
+  <a href="/dashboard" class="mybtn btn-white">← Dashboard</a>
+</div>
+
+<% if (formErr) { %><div class="msg-error"><%= formErr %></div><% } %>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+  <!-- profile card -->
+  <div class="contentcard">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+      <div class="profile-avatar"><%= myuser.myname[0].toUpperCase() %></div>
+      <div>
+        <div style="font-size:18px;font-weight:700"><%= myuser.myname %></div>
+        <div style="font-size:13px;color:#888">@<%= myuser.username %></div>
+        <div style="font-size:13px;color:#888"><%= myuser.myemail %></div>
+      </div>
+    </div>
+    <% if (myuser.mybio) { %>
+      <div style="font-size:14px;color:#555;margin-bottom:16px;padding:10px 14px;background:#f9fafb;border-radius:8px;border:1px solid #eee"><%= myuser.mybio %></div>
+    <% } %>
+    <div style="font-size:13px;color:#999">Member since <%= new Date(myuser.createdAt).toDateString() %></div>
+
+    <!-- projects this user is in -->
+    <hr style="margin:16px 0;border:none;border-top:1px solid #eee"/>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">Projects (<%= myprojects.length %>)</div>
+    <% if (myprojects.length === 0) { %>
+      <div style="font-size:13px;color:#aaa">Not part of any project yet.</div>
+    <% } else { %>
+      <% myprojects.forEach(function(p) { %>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0">
+          <a href="/projects/<%= p._id %>" style="font-size:13px;color:#4a6cf7"><%= p.projectname %></a>
+          <span class="statusbadge statusbadge-<%= p.projectstatus %>" style="font-size:11px"><%= p.projectstatus %></span>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <!-- edit forms (only own profile) -->
+  <% if (isownprofile) { %>
+  <div>
+    <!-- update profile form -->
+    <div class="contentcard" style="margin-bottom:16px">
+      <div style="font-size:15px;font-weight:600;margin-bottom:14px">Edit Profile</div>
+      <form action="/profile/update" method="POST">
+        <div class="formgroup">
+          <label class="formlabel">Full Name</label>
+          <input class="forminput" type="text" name="myname" required value="<%= myuser.myname %>"/>
+        </div>
+        <div class="formgroup">
+          <label class="formlabel">Bio</label>
+          <textarea class="formtextarea" name="mybio" rows="3" placeholder="Tell your team about yourself..."><%= myuser.mybio || '' %></textarea>
+        </div>
+        <div class="form-bottomrow">
+          <button type="submit" class="mybtn btn-blue">Update Profile</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- change password form -->
+    <div class="contentcard">
+      <div style="font-size:15px;font-weight:600;margin-bottom:14px">Change Password</div>
+      <form action="/profile/changepassword" method="POST">
+        <div class="formgroup">
+          <label class="formlabel">Current Password</label>
+          <input class="forminput" type="password" name="oldpassword" required placeholder="Enter current password"/>
+        </div>
+        <div class="formgroup">
+          <label class="formlabel">New Password</label>
+          <input class="forminput" type="password" name="newpassword" required placeholder="Min 6 characters"/>
+        </div>
+        <div class="formgroup">
+          <label class="formlabel">Confirm New Password</label>
+          <input class="forminput" type="password" name="confirmpassword" required placeholder="Type new password again"/>
+        </div>
+        <div class="form-bottomrow">
+          <button type="submit" class="mybtn btn-blue">Change Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <% } %>
+
+</div>
+
+<%- include('partials/footer') %>

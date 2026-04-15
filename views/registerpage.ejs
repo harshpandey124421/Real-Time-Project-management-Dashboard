@@ -1,0 +1,33 @@
+<%- include('partials/header') %>
+<div class="authwrapper">
+  <div class="authcard">
+    <div class="authcard-title">📋 PM Dashboard</div>
+    <div class="authcard-sub">Create a new account</div>
+    <% if (formErr) { %><div class="msg-error"><%= formErr %></div><% } %>
+    <form action="/register" method="POST">
+      <div class="formgroup">
+        <label class="formlabel">Full Name</label>
+        <input class="forminput" type="text" name="myname" required placeholder="e.g. Harsh Kumar" value="<%= oldData.myname || '' %>"/>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Username <span style="color:#888;font-weight:400">(others search you by this)</span></label>
+        <input class="forminput" type="text" name="username" required placeholder="e.g. harsh123  (letters, numbers, underscore)" value="<%= oldData.username || '' %>"/>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Email</label>
+        <input class="forminput" type="email" name="myemail" required placeholder="yourname@email.com" value="<%= oldData.myemail || '' %>"/>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Password (min 6 characters)</label>
+        <input class="forminput" type="password" name="mypassword" required placeholder="Choose a password"/>
+      </div>
+      <div class="formgroup">
+        <label class="formlabel">Confirm Password</label>
+        <input class="forminput" type="password" name="confirmpass" required placeholder="Type password again"/>
+      </div>
+      <button type="submit" class="mybtn btn-blue btn-fullwidth">Create Account</button>
+    </form>
+    <div class="authcard-switch">Already have an account? <a href="/login">Login here</a></div>
+  </div>
+</div>
+<%- include('partials/footer') %>
