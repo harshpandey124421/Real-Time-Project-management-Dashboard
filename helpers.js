@@ -1,7 +1,6 @@
 const ActivityModel     = require('./models/activitymodel')
 const NotificationModel = require('./models/notificationmodel')
 
-// check if user is admin of project
 function isadmin(project, userid) {
   const id = userid.toString()
   const adminid = project.madeBy._id
@@ -10,7 +9,6 @@ function isadmin(project, userid) {
   return adminid === id
 }
 
-// check if user is member (admin or collaborator)
 function ismember(project, userid) {
   if (isadmin(project, userid)) return true
   const id = userid.toString()
@@ -19,7 +17,6 @@ function ismember(project, userid) {
   })
 }
 
-// save activity log
 async function saveactivity(projectid, userid, text) {
   try {
     await ActivityModel.create({ projectid, madeBy: userid, activitytext: text })
@@ -28,7 +25,6 @@ async function saveactivity(projectid, userid, text) {
   }
 }
 
-// save notification for one user
 async function savenotification(userid, message, link) {
   try {
     await NotificationModel.create({ userid, message, link: link || '' })
@@ -37,8 +33,6 @@ async function savenotification(userid, message, link) {
   }
 }
 
-// extract github info from repo URL
-// e.g. https://github.com/harsh/myproject → { owner: 'harsh', repo: 'myproject' }
 function parsegithubrepo(repourl) {
   if (!repourl) return null
   try {
