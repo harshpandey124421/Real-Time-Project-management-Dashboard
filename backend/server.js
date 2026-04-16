@@ -17,8 +17,8 @@ mongoose.connect(process.env.MONGO_URI)
 
 // ---------- view engine ----------
 myapp.set('view engine', 'ejs')
-myapp.set('views', path.join(__dirname, 'views'))
-myapp.use(express.static(path.join(__dirname, 'public')))
+myapp.set('views', path.join(__dirname, '../frontend/views'))
+myapp.use(express.static(path.join(__dirname, '../frontend/public')))
 
 // ---------- middleware ----------
 myapp.use(express.urlencoded({ extended: true }))
